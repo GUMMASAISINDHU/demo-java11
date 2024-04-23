@@ -1,5 +1,11 @@
 pipeline {
     agent any
+
+    environment {
+        // Define environment variables
+        JAVA_HOME = "/usr/lib/jvm/java-11-openjdk-amd64"  // Path to Java 11
+        MAVEN_HOME = "/usr/share/maven" // Path to Maven
+    }
     
     stages {
         stage('checkout scm') {
