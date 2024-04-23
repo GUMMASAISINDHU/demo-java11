@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+
+    environment {
+        // Define environment variables
+        JAVA_HOME = "/usr/lib/jvm/java-11-openjdk-amd64"  // Path to Java 11
+        MAVEN_HOME = "/usr/share/maven" // Path to Maven
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out the code...'
+                checkout scm
+            }
+        }
+
+        stage('Clean') {
+            steps {
+                echo 'Cleaning the project with Maven...'
+                sh "${MAVEN_HOME}/bin/mvn clean"
+            }
+        }
+
+        stage('Build and Test') {
+            steps {
+                echo 'Building the project and running tests with Maven...'
+                sh "${MAVEN_HOME}/bin/mvn clean install"
+                sh "${MAVEN_HOME}/bin/mvn test"
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying the project with Maven...'
+                sh "${MAVEN_HOME}/bin/mvn deploy"
+            }
+        }
+    }
+
+    post {
+        always {
+            // This block runs at the end of the pipeline regardless of the outcome
+            // Collect test reports
+            junit 'target/surefire-reports/**/*.xml' // Collect and report test results
+
+            // Archive artifacts (if needed)
+            archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+        }
+
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
+}
