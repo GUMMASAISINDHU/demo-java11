@@ -7,24 +7,35 @@ pipeline {
         MAVEN_HOME = "/usr/share/maven" // Path to Maven
     }
 
+    parameters {
+        // Define input parameters for the pipeline
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'uat', 'prod'],
+            description: 'Select the target environment: dev, uat, or prod.'
+        )
+        choice(
+            name: 'BRANCH',
+            choices: ['master', 'development', 'feature branch'],
+            description: 'Select the branch to build from: main, development, or feature branch.'
+        )
+    }
+
     stages {
         stage('Checkout') {
             steps {
                 echo 'Checking out the code...'
-                checkout scm
-            }
-        }
-
-        stage('Clean') {
-            steps {
-                echo 'Cleaning the project with Maven...'
-                sh "${MAVEN_HOME}/bin/mvn clean"
+                // Checkout the selected branch
+                checkout([$class: 'GitSCM', branches: [[name: "refs/heads/${params.BRANCH}"]],
+                          doGenerateSubmoduleConfigurations: false,
+                          extensions: [],
+                          userRemoteConfigs: [[url: 'https://github.com/GUMMASAISINDHU/demo-java11.git']]])
             }
         }
 
         stage('Build and Test') {
             steps {
-                echo 'Building the project and running tests with Maven...'
+                echo "Building and testing the project for environment: ${params.ENVIRONMENT}..."
                 sh "${MAVEN_HOME}/bin/mvn clean install"
                 sh "${MAVEN_HOME}/bin/mvn test"
             }
@@ -32,8 +43,9 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Deploying the project with Maven...'
-                sh "${MAVEN_HOME}/bin/mvn deploy"
+                echo "Deploying the project to ${params.ENVIRONMENT} environment..."
+                // Add your deployment commands here. For example:
+                sh "${MAVEN_HOME}/bin/mvn deploy -P${params.ENVIRONMENT}"
             }
         }
     }
@@ -41,7 +53,7 @@ pipeline {
     post {
         always {
             // This block runs at the end of the pipeline regardless of the outcome
-            // Collect test reports
+            // Collect test reports (if tests were run)
             junit 'target/surefire-reports/**/*.xml' // Collect and report test results
 
             // Archive artifacts (if needed)
@@ -57,3 +69,4 @@ pipeline {
         }
     }
 }
+
