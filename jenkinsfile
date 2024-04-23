@@ -6,12 +6,12 @@ pipeline {
         JAVA_HOME = "/usr/lib/jvm/java-11-openjdk-amd64"  // Path to Java 11
         MAVEN_HOME = "/usr/share/maven" // Path to Maven
     }
-    
+
     stages {
         stage('checkout scm') {
             steps {
                 script {
-                    git credentialsId: '8bd8-419d-8af0-30960441fcd7', url: 'ssh://jenkins@git.company.com:/usr/company/repositories/repo.git'
+                    git credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492', url: 'https://github.com/GUMMASAISINDHU/demo-java11.git'
                     sh 'git branch -r | awk \'{print $1}\' ORS=\'\\n\' >>branch.txt'
                 }
             }
@@ -26,24 +26,52 @@ pipeline {
                 }
             }
         } 
-        stage("checkout the branch") {
+
+    stages {
+        stage('Checkout') {
             steps {
-                echo "${env.BRANCH_SCOPE}"
-                git  credentialsId: 'ea346a50-8bd8-419d-8af0-30960441fcd7', url: 'ssh://jenkins@git.company.com/usr/company/repositories/repo.git'
-                sh "git checkout -b build ${env.BRANCH_NAME}"
+                echo 'Checking out the code...'
+                // Checkout the selected branch
+                checkout([$class: 'GitSCM', branches: [[name: "refs/heads/${params.BRANCH}"]],
+                          doGenerateSubmoduleConfigurations: false,
+                          extensions: [],
+                          userRemoteConfigs: [[url: 'https://your-repo-url.git']]])
             }
         }
-        stage("exec maven build") {
+
+        stage('Build and Test') {
             steps {
-                withMaven(maven: 'M3', mavenSettingsConfig: 'mvn-setting-xml') {
-                   sh "mvn clean install "
-                }
+                echo "Building and testing the project for environment: ${params.ENVIRONMENT}..."
+                sh "${MAVEN_HOME}/bin/mvn clean install"
+                sh "${MAVEN_HOME}/bin/mvn test"
             }
         }
-        stage("clean workwpace") {
+
+        stage('Deploy') {
             steps {
-                cleanWs()
+                echo "Deploying the project to ${params.ENVIRONMENT} environment..."
+                // Add your deployment commands here. For example:
+                sh "${MAVEN_HOME}/bin/mvn deploy -P${params.ENVIRONMENT}"
             }
+        }
+    }
+
+    post {
+        always {
+            // This block runs at the end of the pipeline regardless of the outcome
+            // Collect test reports (if tests were run)
+            junit 'target/surefire-reports/**/*.xml' // Collect and report test results
+
+            // Archive artifacts (if needed)
+            archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+        }
+
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
