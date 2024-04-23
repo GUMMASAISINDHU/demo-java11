@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // Define environment variables
-        JAVA_HOME = "/usr/lib/jvm/java-11-openjdk-amd64"  // Path to Java 11
+        JAVA_HOME = "/usr/lib/jvm/java-11-openjdk-amd64" // Path to Java 11
         MAVEN_HOME = "/usr/share/maven" // Path to Maven
     }
 
@@ -16,8 +16,8 @@ pipeline {
         )
         choice(
             name: 'BRANCH',
-            choices: ['main', 'development', 'feature branch'],
-            description: 'Select the branch to build from: main, development, or feature branch.'
+            choices: getBranchesFromGit(),
+            description: 'Select the branch to build from:'
         )
     }
 
@@ -26,10 +26,11 @@ pipeline {
             steps {
                 echo 'Checking out the code...'
                 // Checkout the selected branch
-                checkout([$class: 'GitSCM', branches: [[name: "refs/heads/${params.BRANCH}"]],
+                checkout([$class: 'GitSCM',
+                          branches: [[name: "refs/heads/${params.BRANCH}"]],
                           doGenerateSubmoduleConfigurations: false,
                           extensions: [],
-                          userRemoteConfigs: [[url: 'https://your-repo-url.git']]])
+                          userRemoteConfigs: [[url: 'https://github.com/GUMMASAISINDHU/demo-java11.git']]])
             }
         }
 
@@ -68,4 +69,22 @@ pipeline {
             echo 'Pipeline failed.'
         }
     }
+}
+
+// Function to get the list of branches from Git
+def getBranchesFromGit() {
+    // Specify the Git repository URL
+    def gitRepoUrl = 'https://your-repo-url.git'
+    
+    // Use the 'git ls-remote' command to fetch the list of branches
+    def gitCmd = "git ls-remote --heads ${gitRepoUrl}"
+    
+    // Execute the command and capture the output
+    def output = sh(script: gitCmd, returnStdout: true).trim()
+    
+    // Extract branch names from the output
+    def branches = output.split('\n').collect { it.split()[1].replace('refs/heads/', '') }
+    
+    // Return the list of branches as a newline-separated string
+    return branches.join('\n')
 }
