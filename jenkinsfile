@@ -3,15 +3,21 @@ pipeline {
 
     environment {
         // Define environment variables
-        JAVA_HOME = "/usr/lib/jvm/java-11-openjdk-11.0.23.0.9-3.el9.x86_64" // Path to Java 11
+        JAVA_HOME = "/usr/lib/jvm/java-11-openjdk-amd64"  // Path to Java 11
         MAVEN_HOME = "/usr/share/maven" // Path to Maven
     }
 
     parameters {
+        // Define input parameters for the pipeline
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'uat', 'prod'],
+            description: 'Select the target environment: dev, uat, or prod.'
+        )
         choice(
             name: 'BRANCH',
-            choices: getBranchesFromGit(),
-            description: 'Select the branch to build from:'
+            choices: ['main', 'development', 'feature branch'],
+            description: 'Select the branch to build from: main, development, or feature branch.'
         )
     }
 
@@ -20,18 +26,16 @@ pipeline {
             steps {
                 echo 'Checking out the code...'
                 // Checkout the selected branch
-                checkout([$class: 'GitSCM',
-                          branches: [[name: "refs/heads/${params.BRANCH}"]],
+                checkout([$class: 'GitSCM', branches: [[name: "refs/heads/${params.BRANCH}"]],
                           doGenerateSubmoduleConfigurations: false,
                           extensions: [],
-                          userRemoteConfigs: [[url: 'https://github.com/GUMMASAISINDHU/demo-java11.git']]
-                         ])
+                          userRemoteConfigs: [[url: 'https://your-repo-url.git']]])
             }
         }
 
         stage('Build and Test') {
             steps {
-                echo "Building and testing the project on branch: ${params.BRANCH}..."
+                echo "Building and testing the project for environment: ${params.ENVIRONMENT}..."
                 sh "${MAVEN_HOME}/bin/mvn clean install"
                 sh "${MAVEN_HOME}/bin/mvn test"
             }
@@ -39,9 +43,9 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo "Deploying the project on branch: ${params.BRANCH}..."
-                // Add your deployment commands here
-                sh "${MAVEN_HOME}/bin/mvn deploy"
+                echo "Deploying the project to ${params.ENVIRONMENT} environment..."
+                // Add your deployment commands here. For example:
+                sh "${MAVEN_HOME}/bin/mvn deploy -P${params.ENVIRONMENT}"
             }
         }
     }
@@ -65,19 +69,3 @@ pipeline {
         }
     }
 }
-
-// Function to get the list of branches from Git
-def getBranchesFromGit() {
-    def gitRepoUrl = 'https://github.com/GUMMASAISINDHU/demo-java11.git'
-    def gitCmd = "git ls-remote --heads ${gitRepoUrl}"
-    
-    def output = sh(script: gitCmd, returnStdout: true).trim()
-    
-    // Extract branch names from the output
-    def branches = output.split('\n').collect { it.split()[1].replace('refs/heads/', '') }
-    
-    // Return the list of branches as a choice parameter
-    return branches.join('\n')
-}
-
-
