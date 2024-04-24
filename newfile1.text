@@ -43,9 +43,9 @@ pipeline {
 
         stage('Build and Test') {
             steps {
-                echo "Building and testing the project..."
-                sh "${MAVEN_HOME}/bin/mvn clean install"
-                sh "${MAVEN_HOME}/bin/mvn test"
+                sh '''
+                mvn package
+                '''
             }
         }
 
