@@ -6,29 +6,41 @@ pipeline {
         MAVEN_HOME = "/usr/share/maven"
     }
 
-    // Stage to fetch branches and save to branch.txt
-    stage('Fetch Remote Branches') {
-        steps {
-            script {
-                // Checkout the repository
-                git(credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492', url: 'https://github.com/GUMMASAISINDHU/demo-java11.git')
-
-                // Fetching remote branches and writing them to branch.txt
-                sh 'git branch -r | awk \'{print $1}\' > branch.txt'
-            }
+    // Define the parameters block
+    parameters {
+        script {
+            // Read the contents of branch.txt file
+            def branches = readFile('branch.txt').split('\n').collect { it.trim() }
+            
+            // Create a choice parameter for selecting the branch to build
+            choice(
+                name: 'BRANCH',
+                choices: branches,
+                description: 'Select the branch to build from the available branches.'
+            )
         }
     }
 
-    // Define the parameters block
-    parameters {
-        choice(
-            name: 'BRANCH',
-            choices: readFile('branch.txt').split('\n').toList(),
-            description: 'Select the branch to build from the available branches.'
-        )
-    }
-
     stages {
+        stage('Fetch Remote Branches') {
+            steps {
+                script {
+                    // Checkout the repository
+                    checkout([
+                        $class: 'GitSCM',
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/GUMMASAISINDHU/demo-java11.git',
+                            credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492'
+                        ]],
+                        branches: [[name: 'refs/heads/master']]
+                    ])
+
+                    // Fetching remote branches and writing them to branch.txt
+                    sh 'git branch -r | awk \'{print $1}\' > branch.txt'
+                }
+            }
+        }
+
         stage('Checkout SCM') {
             steps {
                 script {
