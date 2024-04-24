@@ -6,63 +6,58 @@ pipeline {
         MAVEN_HOME = "/usr/share/maven"
     }
 
-    // Fetch remote branches
+    // Stage to fetch branches and save to branch.txt
     stage('Fetch Remote Branches') {
         steps {
             script {
-                // Checkout the repository to fetch remote branches
+                // Checkout the repository
                 git(credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492', url: 'https://github.com/GUMMASAISINDHU/demo-java11.git')
 
-                // Fetch and save remote branches to 'branch.txt'
+                // Fetching remote branches and writing them to branch.txt
                 sh 'git branch -r | awk \'{print $1}\' > branch.txt'
             }
         }
     }
 
-    // Request user input for the branch to build
-    stage('Choose Branch') {
-        steps {
-            script {
-                // Read branches from 'branch.txt'
-                def branches = readFile('branch.txt').split('\n').toList()
+    // Define the parameters block
+    parameters {
+        choice(
+            name: 'BRANCH',
+            choices: readFile('branch.txt').split('\n').toList(),
+            description: 'Select the branch to build from the available branches.'
+        )
+    }
 
-                // Input step to ask the user for branch choice
-                env.BRANCH = input(
-                    message: 'Select the branch to build',
-                    parameters: [choice(name: 'BRANCH', choices: branches, description: 'Choose a branch to build from the available list')]
-                )
+    stages {
+        stage('Checkout SCM') {
+            steps {
+                script {
+                    // Checkout the code for the chosen branch
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: "refs/heads/${params.BRANCH}"]],
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/GUMMASAISINDHU/demo-java11.git',
+                            credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492'
+                        ]]
+                    ])
+                }
             }
         }
-    }
 
-    // Checkout the chosen branch
-    stage('Checkout SCM') {
-        steps {
-            script {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: "refs/heads/${env.BRANCH}"]],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/GUMMASAISINDHU/demo-java11.git',
-                        credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492'
-                    ]]
-                ])
+        stage('Build and Test') {
+            steps {
+                echo "Building and testing the project..."
+                sh "${MAVEN_HOME}/bin/mvn clean install"
+                sh "${MAVEN_HOME}/bin/mvn test"
             }
         }
-    }
 
-    stage('Build and Test') {
-        steps {
-            echo "Building and testing the project..."
-            sh "${MAVEN_HOME}/bin/mvn clean install"
-            sh "${MAVEN_HOME}/bin/mvn test"
-        }
-    }
-
-    stage('Deploy') {
-        steps {
-            echo "Deploying the project..."
-            sh "${MAVEN_HOME}/bin/mvn deploy"
+        stage('Deploy') {
+            steps {
+                echo "Deploying the project..."
+                sh "${MAVEN_HOME}/bin/mvn deploy"
+            }
         }
     }
 
