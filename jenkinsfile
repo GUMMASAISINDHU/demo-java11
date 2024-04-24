@@ -10,8 +10,9 @@ pipeline {
         stage('Checkout SCM') {
             steps {
                 script {
-                    git credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492', url: 'https://github.com/GUMMASAISINDHU/demo-java11.git'
-                    sh 'git branch -r | awk \'{print $1}\' ORS=\'\\n\' >>branch.txt'
+                    git(credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492', url: 'https://github.com/GUMMASAISINDHU/demo-java11.git')
+                    // Saving remote branches to branch.txt
+                    sh 'git branch -r | awk \'{print $1}\' > branch.txt'
                 }
             }
         }
@@ -20,9 +21,14 @@ pipeline {
             steps {
                 script {
                     def branches = readFile('branch.txt')
-                    env.BRANCH_NAME = input message: 'Please choose the branch to build',
-                                            ok: 'Validate!',
-                                            parameters: [choice(name: 'Branch', choices: branches, description: 'Branch to build')]
+                    // Ensure branch.txt has valid content
+                    if (branches?.trim()) {
+                        env.BRANCH_NAME = input message: 'Please choose the branch to build',
+                                                ok: 'Validate!',
+                                                parameters: [choice(name: 'Branch', choices: branches, description: 'Branch to build')]
+                    } else {
+                        error("No branches found in branch.txt")
+                    }
                 }
             }
         }
@@ -65,10 +71,12 @@ pipeline {
 
         success {
             echo 'Pipeline completed successfully!'
+            // Consider adding more success handling (e.g., notifications)
         }
 
         failure {
             echo 'Pipeline failed.'
+            // Consider adding more failure handling (e.g., notifications)
         }
     }
 }
