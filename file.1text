@@ -35,7 +35,7 @@ pipeline {
                     branches: [[name: "refs/heads/${env.BRANCH_NAME}"]],
                     userRemoteConfigs: [[
                         url: 'https://github.com/GUMMASAISINDHU/demo-java11.git',
-                        credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492'
+                        credentialsId: 'e1136500-62bb-40e1-b58a-12b61954b6fe'
                     ]]
                 ])
             }
