@@ -4,7 +4,7 @@ pipeline {
         stage('Declarative: Checkout SCM') {
             steps {
                 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: '
-https://github.com//GUMMASAISINDHU/demo-java11']]])
+https://github.com/GUMMASAISINDHU/demo-java11']]])
             }
         }
         stage('Choose Branch') {
