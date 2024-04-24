@@ -8,17 +8,11 @@ pipeline {
 
     // Define the parameters block
     parameters {
-        script {
-            // Read the contents of branch.txt file
-            def branches = readFile('branch.txt').split('\n').collect { it.trim() }
-            
-            // Create a choice parameter for selecting the branch to build
-            choice(
-                name: 'BRANCH',
-                choices: branches,
-                description: 'Select the branch to build from the available branches.'
-            )
-        }
+        choice(
+            name: 'BRANCH',
+            choices: readFile('branch.txt').split('\n').collect { it.trim() },
+            description: 'Select the branch to build from the available branches.'
+        )
     }
 
     stages {
