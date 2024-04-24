@@ -24,7 +24,7 @@ pipeline {
                         $class: 'GitSCM',
                         userRemoteConfigs: [[
                             url: 'https://github.com/GUMMASAISINDHU/demo-java11.git',
-                            credentialsId: '5b9060c2-64f3-45d7-aab7-2d7af973838d'
+                            credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492'
                         ]],
                         branches: [[name: 'refs/heads/master']]
                     ])
