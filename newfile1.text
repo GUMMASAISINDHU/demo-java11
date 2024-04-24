@@ -30,14 +30,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo 'Checking out the code...'
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: "refs/heads/${env.BRANCH_NAME}"]],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/GUMMASAISINDHU/demo-java11.git',
-                        credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492'
-                    ]]
-                ])
+                checkout scm
             }
         }
 
