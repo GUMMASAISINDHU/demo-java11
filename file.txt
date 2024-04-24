@@ -8,16 +8,10 @@ pipeline {
     }
 
     parameters {
-        // Define input parameters for the pipeline
-        choice(
-            name: 'ENVIRONMENT',
-            choices: ['dev', 'uat', 'prod'],
-            description: 'Select the target environment: dev, uat, or prod.'
-        )
         choice(
             name: 'BRANCH',
-            choices: ['main', 'development', 'feature-branch'],
-            description: 'Select the branch to build from: main, development, or feature branch.'
+            choices: getBranchesFromGit(),
+            description: 'Select the branch to build from:'
         )
     }
 
@@ -37,7 +31,7 @@ pipeline {
 
         stage('Build and Test') {
             steps {
-                echo "Building and testing the project for environment: ${params.ENVIRONMENT}..."
+                echo "Building and testing the project on branch: ${params.BRANCH}..."
                 sh "${MAVEN_HOME}/bin/mvn clean install"
                 sh "${MAVEN_HOME}/bin/mvn test"
             }
@@ -45,9 +39,9 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo "Deploying the project to ${params.ENVIRONMENT} environment..."
-                // Deploy using the selected environment profile
-                sh "${MAVEN_HOME}/bin/mvn deploy -P${params.ENVIRONMENT}"
+                echo "Deploying the project on branch: ${params.BRANCH}..."
+                // Add your deployment commands here
+                sh "${MAVEN_HOME}/bin/mvn deploy"
             }
         }
     }
@@ -71,3 +65,18 @@ pipeline {
         }
     }
 }
+
+// Function to get the list of branches from Git
+def getBranchesFromGit() {
+    def gitRepoUrl = 'https://github.com/GUMMASAISINDHU/demo-java11.git'
+    def gitCmd = "git ls-remote --heads ${gitRepoUrl}"
+    
+    def output = sh(script: gitCmd, returnStdout: true).trim()
+    
+    // Extract branch names from the output
+    def branches = output.split('\n').collect { it.split()[1].replace('refs/heads/', '') }
+    
+    // Return the list of branches as a choice parameter
+    return branches.join('\n')
+}
+
