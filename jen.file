@@ -19,9 +19,9 @@ pipeline {
                 }
             }
         }
-        stage('Deploy') { 
+        stage('Deliver') { 
             steps {
-                echo 'Deploying...'
+                sh './jenkins/scripts/deliver.sh' 
             }
         }
     }
