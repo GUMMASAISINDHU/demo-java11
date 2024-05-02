@@ -1,84 +1,52 @@
 pipeline {
     agent any
-
-    environment {
-        JAVA_HOME = "/usr/lib/jvm/java-11-openjdk-11.0.23.0.9-3.el9.x86_64"
-        MAVEN_HOME = "/usr/share/maven"
-    }
-
-    // Define the parameters block
     parameters {
-        choice(
-            name: 'BRANCH',
-            choices: readFile('branch.txt').split('\n').collect { it.trim() },
-            description: 'Select the branch to build from the available branches.'
-        )
+        // Parameter to select a branch from the Git repository
+        choice(name: 'Branch', choices: fetchBranches(), description: 'Select a branch from the repository')
+
+        // Parameter to select one of the latest 5 commits from the selected branch
+        choice(name: 'Commit', choices: fetchCommits(params.Branch), description: 'Select one of the latest 5 commits')
     }
 
     stages {
-        stage('Fetch Remote Branches') {
-            steps {
-                script {
-                    // Checkout the repository
-                    checkout([
-                        $class: 'GitSCM',
-                        userRemoteConfigs: [[
-                            url: 'https://github.com/GUMMASAISINDHU/demo-java11.git',
-                            credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492'
-                        ]],
-                        branches: [[name: 'refs/heads/master']]
-                    ])
-
-                    // Fetching remote branches and writing them to branch.txt
-                    sh 'git branch -r | awk \'{print $1}\' > branch.txt'
-                }
-            }
-        }
-
         stage('Checkout SCM') {
             steps {
                 script {
-                    // Checkout the code for the chosen branch
+                    // Checkout the selected branch and commit ID from the Git repository
                     checkout([
                         $class: 'GitSCM',
-                        branches: [[name: "refs/heads/${params.BRANCH}"]],
                         userRemoteConfigs: [[
-                            url: 'https://github.com/GUMMASAISINDHU/demo-java11.git',
-                            credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492'
-                        ]]
+                            url: 'https://github.com/GUMMASAISINDHU/demo-java11', // Replace with your repository URL
+                            credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492' // Replace with your credentials ID if needed
+                        ]],
+                        branches: [[name: params.Commit]]
                     ])
+                    
+                    // Log the commit ID
+                    echo "Checked out commit ID: ${params.Commit}"
+                    
+                    // Set the commit ID as the build description
+                    currentBuild.description = "Commit ID: ${params.Commit}"
                 }
             }
         }
 
-        stage('Build and Test') {
-            steps {
-                echo "Building and testing the project..."
-                sh "${MAVEN_HOME}/bin/mvn clean install"
-                sh "${MAVEN_HOME}/bin/mvn test"
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo "Deploying the project..."
-                sh "${MAVEN_HOME}/bin/mvn deploy"
-            }
-        }
+        // Add other stages here (e.g., Build, Test, Deploy) as per your workflow
     }
+}
 
-    post {
-        always {
-            junit 'target/surefire-reports/**/*.xml'
-            archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
-        }
+def fetchBranches() {
+    // Fetch available branches from the Git repository and return them as a list
+    def script = '''
+        git ls-remote --heads https://github.com/GUMMASAISINDHU/demo-java11 | awk '{print $2}' | sed 's#refs/heads/##'
+    '''
+    return sh(script: script, returnStdout: true).trim().split('\n').toList()
+}
 
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-
-        failure {
-            echo 'Pipeline failed.'
-        }
-    }
+def fetchCommits(branch) {
+    // Fetch the latest 5 commits from the specified branch and return them as a list
+    def script = """
+        git ls-remote https://github.com/GUMMASAISINDHU/demo-java11 $branch | awk '{print $1}' | head -n 5
+    """
+    return sh(script: script, returnStdout: true).trim().split('\n').toList()
 }
