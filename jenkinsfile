@@ -16,8 +16,8 @@ pipeline {
                     checkout([
                         $class: 'GitSCM',
                         userRemoteConfigs: [[
-                            url: 'https://github.com/GUMMASAISINDHU/demo-java11', // Replace with your repository URL
-                            credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492' // Replace with your credentials ID if needed
+                            url: 'https://github.com/GUMMASAISINDHU/demo-java11', // Repository URL
+                            credentialsId: '88b92039-366f-4db0-910b-f0f4187c7492' // Credentials ID if needed
                         ]],
                         branches: [[name: params.Commit]]
                     ])
@@ -46,7 +46,7 @@ def fetchBranches() {
 def fetchCommits(branch) {
     // Fetch the latest 5 commits from the specified branch and return them as a list
     def script = """
-        git ls-remote https://github.com/GUMMASAISINDHU/demo-java11 $branch | awk '{print $1}' | head -n 5
+        git log --pretty=format:%H -n 5 origin/$branch
     """
     return sh(script: script, returnStdout: true).trim().split('\n').toList()
 }
