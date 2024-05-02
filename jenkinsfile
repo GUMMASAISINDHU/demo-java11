@@ -36,17 +36,23 @@ pipeline {
 }
 
 def fetchBranches() {
-    // Fetch available branches from the Git repository and return them as a list
-    def script = '''
-        git ls-remote --heads https://github.com/GUMMASAISINDHU/demo-java11 | awk '{print $2}' | sed 's#refs/heads/##'
-    '''
-    return sh(script: script, returnStdout: true).trim().split('\n').toList()
+    // Use a node block to ensure the script is executed in the correct context
+    node {
+        // Fetch available branches from the Git repository and return them as a list
+        def script = '''
+            git ls-remote --heads https://github.com/GUMMASAISINDHU/demo-java11 | awk '{print $2}' | sed 's#refs/heads/##'
+        '''
+        return sh(script: script, returnStdout: true).trim().split('\n').toList()
+    }
 }
 
 def fetchCommits(branch) {
-    // Fetch the latest 5 commits from the specified branch and return them as a list
-    def script = """
-        git log --pretty=format:%H -n 5 origin/$branch
-    """
-    return sh(script: script, returnStdout: true).trim().split('\n').toList()
+    // Use a node block to ensure the script is executed in the correct context
+    node {
+        // Fetch the latest 5 commits from the specified branch and return them as a list
+        def script = """
+            git ls-remote --heads https://github.com/GUMMASAISINDHU/demo-java11 $branch | awk '{print $1}' | head -n 5
+        """
+        return sh(script: script, returnStdout: true).trim().split('\n').toList()
+    }
 }
