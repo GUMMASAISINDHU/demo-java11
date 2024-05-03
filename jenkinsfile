@@ -56,3 +56,5 @@ def fetchCommits(branch) {
         return sh(script: script, returnStdout: true).trim().split('\n').toList()
     }
 }
+
+
