@@ -28,6 +28,8 @@ applications:
     JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 11.+}}'
 ```
 
+
+
 then,
 
 ```
