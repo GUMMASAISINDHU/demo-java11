@@ -39,7 +39,7 @@ https://github.com/GUMMASAISINDHU/demo-java11']]])
             echo 'This will always run'
         }
         success {
-            echo 'Build and deployment successful!'
+            echo 'Build and deployment successfu!'
             input 'Deploy to production?'
         }
         failure {
